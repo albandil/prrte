@@ -898,3 +898,46 @@ int prte_rmaps_base_check_oversubscribed(prte_job_t *jdata,
     }
     return PRTE_SUCCESS;
 }
+
+hwloc_obj_t prte_rmaps_base_get_next_obj_inside_cpuset_by_type(hwloc_topology_t topology,
+                                                               hwloc_cpuset_t baseset,
+                                                               hwloc_obj_type_t type,
+                                                               hwloc_obj_t prev)
+{
+    /* this function behaves as `hwloc_get_next_obj_inside_cpuset_by_type` except
+     * that it does not compare the *full* cpuset of the object to the given baseset,
+     * but rather just its *allowed* subset... so that we can return also objects,
+     * whose parts are not allowed (e.g. when hyperthreads are masked out by cgroups)
+     */
+
+    int depth = hwloc_get_type_depth(topology, type);
+    if (depth == HWLOC_TYPE_DEPTH_UNKNOWN || depth == HWLOC_TYPE_DEPTH_MULTIPLE)
+        return NULL;
+
+    /* allocate scratch space */
+    hwloc_cpuset_t availcpus = hwloc_bitmap_alloc();
+
+    /* get allowed cpuset mask */
+    hwloc_const_cpuset_t allowedcpus = hwloc_topology_get_allowed_cpuset(topology);
+
+    /* loop over all objects of given type, starting at given object (if given) */
+    hwloc_obj_t next = hwloc_get_next_obj_by_depth(topology, depth, prev);
+    if (!next) {
+        return NULL;
+    }
+    /* mask out disallowed cpus from this object */
+    hwloc_bitmap_and(availcpus, next->cpuset, allowedcpus);
+    /* test if what remains is subset of 'baseset' */
+    while (next && (hwloc_bitmap_iszero(availcpus) || !hwloc_bitmap_isincluded(availcpus, baseset))) {
+        /* if not, try the next object in line */
+        next = next->next_cousin;
+        if (next) {
+            hwloc_bitmap_and(availcpus, next->cpuset, allowedcpus);
+        }
+    }
+
+    /* release scratch space */
+    hwloc_bitmap_free(availcpus);
+
+    return next;
+}

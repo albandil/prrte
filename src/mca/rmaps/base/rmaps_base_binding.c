@@ -84,9 +84,9 @@ static int bind_generic(prte_job_t *jdata, prte_proc_t *proc,
 
     trg_obj = NULL;
     /* find the first object of that type in the target that has at least one available CPU */
-    tmp_obj = hwloc_get_next_obj_inside_cpuset_by_type(node->topology->topo,
-                                                       prte_rmaps_base.baseset,
-                                                       options->hwb, NULL);
+    tmp_obj = prte_rmaps_base_get_next_obj_inside_cpuset_by_type(node->topology->topo,
+                                                                 prte_rmaps_base.baseset,
+                                                                 options->hwb, NULL);
     while (NULL != tmp_obj) {
 #if HWLOC_API_VERSION < 0x20000
         tmpcpus = tmp_obj->allowed_cpuset;
@@ -112,9 +112,9 @@ static int bind_generic(prte_job_t *jdata, prte_proc_t *proc,
             trg_obj = tmp_obj;
             break;
         }
-        tmp_obj = hwloc_get_next_obj_inside_cpuset_by_type(node->topology->topo,
-                                                           prte_rmaps_base.baseset,
-                                                           options->hwb, tmp_obj);
+        tmp_obj = prte_rmaps_base_get_next_obj_inside_cpuset_by_type(node->topology->topo,
+                                                                     prte_rmaps_base.baseset,
+                                                                     options->hwb, tmp_obj);
     }
     if (NULL == trg_obj) {
         /* there aren't any appropriate targets under this object */

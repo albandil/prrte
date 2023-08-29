@@ -73,6 +73,11 @@ PRTE_EXPORT int prte_rmaps_base_bind_proc(prte_job_t *jdata,
 PRTE_EXPORT void prte_rmaps_base_update_local_ranks(prte_job_t *jdata, prte_node_t *oldnode,
                                                     prte_node_t *newnode, prte_proc_t *newproc);
 
+PRTE_EXPORT hwloc_obj_t prte_rmaps_base_get_next_obj_inside_cpuset_by_type(hwloc_topology_t topology,
+                                                                           hwloc_cpuset_t baseset,
+                                                                           hwloc_obj_type_t type,
+                                                                           hwloc_obj_t prev);
+
 END_C_DECLS
 
 #endif
